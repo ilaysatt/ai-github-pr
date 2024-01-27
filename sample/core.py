@@ -1,11 +1,9 @@
-from anyio.streams import file
-
 from . import helper
 from openai import OpenAI
 import os
 
 
-def gpt_convo(f: str, comment: bool, change: bool, post: bool):
+def gpt_convo(f, comment: bool, change: bool, post: bool):
     patch = ("+\t prittt(hlo wr')"
              "-\t print('hello world')")
     f = "print('hello world')"
