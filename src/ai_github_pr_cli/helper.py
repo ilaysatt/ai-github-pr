@@ -6,18 +6,18 @@ import os
 
 
 def configure():
-    load_dotenv()
+    current_directory = os.getcwd()
+    env_path = os.path.join(current_directory, '.env')
+    load_dotenv(dotenv_path=env_path)
 
 
 def get_repo_pull_info():
     configure()
     auth = Auth.Token(os.getenv('github_access_token'))
     g = Github(auth=auth)
-    # repo_info = os.popen('git remote get-url origin').read().strip().split('/')[-2:]
-    # repo_owner, repo_name = repo_info[0].split(':')[1], repo_info[1].replace('.git', '')
-    # repo = g.get_repo(f"{repo_owner}/{repo_name}")
-    # repo = g.get_repo("openai/openai-python")
-    repo = g.get_repo("ilaysatt/example-repo")
+    repo_info = os.popen('git remote get-url origin').read().strip().split('/')[-2:]
+    repo_owner, repo_name = repo_info[0].split(':')[1], repo_info[1].replace('.git', '')
+    repo = g.get_repo(f"{repo_owner}/{repo_name}")
     repo_pulls = repo.get_pulls()
     pull_content = []
     for pull in repo_pulls:
@@ -39,10 +39,9 @@ def upload_repo_pull_comments(pull_content):
     configure()
     auth = Auth.Token(os.getenv('github_access_token'))
     g = Github(auth=auth)
-    # repo_info = os.popen('git remote get-url origin').read().strip().split('/')[-2:]
-    # repo_owner, repo_name = repo_info[0].split(':')[1], repo_info[1].replace('.git', '')
-    # repo = g.get_repo(f"{repo_owner}/{repo_name}")
-    repo = g.get_repo("ilaysatt/example-repo")
+    repo_info = os.popen('git remote get-url origin').read().strip().split('/')[-2:]
+    repo_owner, repo_name = repo_info[0].split(':')[1], repo_info[1].replace('.git', '')
+    repo = g.get_repo(f"{repo_owner}/{repo_name}")
     for content in pull_content:
         pull_request = repo.get_pull(content[0])
         for file in content[2]:
