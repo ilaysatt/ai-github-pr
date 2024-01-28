@@ -1,0 +1,3 @@
+#!/usr/bin/env python3
+import ai_github_pr_cli
+ai_github_pr_cli.main("f", True, True, False)

@@ -1,4 +1,3 @@
-from context import sample
-import os
+import src
 
-sample.gpt_convo("f", True, True, False)
+src.main("f", True, True, False)
