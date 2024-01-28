@@ -5,24 +5,23 @@ from dotenv import load_dotenv
 import os
 
 
-def configure():
-    current_directory = os.getcwd()
-    env_path = os.path.join(current_directory, '.env')
+def configure(env_location=None):
+    if not env_location:
+        current_directory = os.getcwd()
+        env_path = os.path.join(current_directory, '.env')
+    else:
+        env_path = env_location
     load_dotenv(dotenv_path=env_path)
 
 
 def get_repo_pull_info(repo_full_name=None):
-    configure()
     auth = Auth.Token(os.getenv('github_access_token'))
     g = Github(auth=auth)
     if not repo_full_name:
         repo_info = os.popen('git remote get-url origin').read().strip().split('/')[-2:]
         repo_owner, repo_name = repo_info[0].split(':')[1], repo_info[1].replace('.git', '')
         repo_full_name = f"{repo_owner}/{repo_name}"
-    try:
-        repo = g.get_repo(repo_full_name)
-    except GithubException:
-        return GithubException
+    repo = g.get_repo(repo_full_name)
     repo_pulls = repo.get_pulls()
     pull_content = []
     for pull in repo_pulls:
@@ -41,7 +40,6 @@ def get_repo_pull_info(repo_full_name=None):
 
 
 def upload_repo_pull_comments(pull_content, repo_full_name=None):
-    configure()
     auth = Auth.Token(os.getenv('github_access_token'))
     g = Github(auth=auth)
     if not repo_full_name:

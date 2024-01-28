@@ -10,10 +10,15 @@ def main():
     parser.add_argument("-p", "--post", default=False, help="Post comments to GitHub", action="store_true")
     parser.add_argument("-r", "--repo", type=str, default=None, help="Which repository to check. The default "
                                                                      "repository is your current directory. The "
-                                                                     "format is {repo_name}/{repo_name}")
+                                                                     "format is {repo_owner}/{repo_name}")
+    parser.add_argument("-e", "--env", type=str, default=None, help="Location of .env file to use. The format of the "
+                                                                    ".env should as follows:\n"
+                                                                    "\napi_key={github_api_key}\n"
+                                                                    "github_access_token={github_access_token}")
     args = parser.parse_args()
-    helper.configure()
+    helper.configure(args.env)
     pull_content = helper.get_repo_pull_info(args.repo)
+
     client = OpenAI(
         api_key=os.getenv('api_key')
     )
@@ -52,7 +57,7 @@ def main():
             print(chat_completion.choices[0].message.content)
     if args.post:
         print("Posting the comments to GitHub...")
-        helper.upload_repo_pull_comments(pull_content)
+        helper.upload_repo_pull_comments(pull_content, args.repo)
 
 
 if __name__ == "__main__":
