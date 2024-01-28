@@ -7,10 +7,13 @@ import argparse
 
 def main():
     parser = argparse.ArgumentParser(description="A comment generator for GitHub pull-requests, based on OpenAI.")
-    parser.add_argument("-p", "--post", help="Post comments to GitHub", action="store_true", default=False)
-    helper.configure()
+    parser.add_argument("-p", "--post", default=False, help="Post comments to GitHub", action="store_true")
+    parser.add_argument("-r", "--repo", type=str, default=None, help="Which repository to check. The default "
+                                                                     "repository is your current directory. The "
+                                                                     "format is {repo_name}/{repo_name}")
     args = parser.parse_args()
-    pull_content = helper.get_repo_pull_info()
+    helper.configure()
+    pull_content = helper.get_repo_pull_info(args.repo)
     client = OpenAI(
         api_key=os.getenv('api_key')
     )
@@ -48,6 +51,7 @@ def main():
             file.append(chat_completion.choices[0].message.content)
             print(chat_completion.choices[0].message.content)
     if args.post:
+        print("Posting the comments to GitHub...")
         helper.upload_repo_pull_comments(pull_content)
 
 

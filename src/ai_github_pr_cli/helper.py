@@ -11,13 +11,18 @@ def configure():
     load_dotenv(dotenv_path=env_path)
 
 
-def get_repo_pull_info():
+def get_repo_pull_info(repo_full_name=None):
     configure()
     auth = Auth.Token(os.getenv('github_access_token'))
     g = Github(auth=auth)
-    repo_info = os.popen('git remote get-url origin').read().strip().split('/')[-2:]
-    repo_owner, repo_name = repo_info[0].split(':')[1], repo_info[1].replace('.git', '')
-    repo = g.get_repo(f"{repo_owner}/{repo_name}")
+    if not repo_full_name:
+        repo_info = os.popen('git remote get-url origin').read().strip().split('/')[-2:]
+        repo_owner, repo_name = repo_info[0].split(':')[1], repo_info[1].replace('.git', '')
+        repo_full_name = f"{repo_owner}/{repo_name}"
+    try:
+        repo = g.get_repo(repo_full_name)
+    except GithubException:
+        return GithubException
     repo_pulls = repo.get_pulls()
     pull_content = []
     for pull in repo_pulls:
@@ -35,13 +40,15 @@ def get_repo_pull_info():
     return pull_content
 
 
-def upload_repo_pull_comments(pull_content):
+def upload_repo_pull_comments(pull_content, repo_full_name=None):
     configure()
     auth = Auth.Token(os.getenv('github_access_token'))
     g = Github(auth=auth)
-    repo_info = os.popen('git remote get-url origin').read().strip().split('/')[-2:]
-    repo_owner, repo_name = repo_info[0].split(':')[1], repo_info[1].replace('.git', '')
-    repo = g.get_repo(f"{repo_owner}/{repo_name}")
+    if not repo_full_name:
+        repo_info = os.popen('git remote get-url origin').read().strip().split('/')[-2:]
+        repo_owner, repo_name = repo_info[0].split(':')[1], repo_info[1].replace('.git', '')
+        repo_full_name = f"{repo_owner}/{repo_name}"
+    repo = g.get_repo(repo_full_name)
     for content in pull_content:
         pull_request = repo.get_pull(content[0])
         for file in content[2]:
