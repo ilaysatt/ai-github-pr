@@ -14,7 +14,7 @@ def configure(env_location=None):
     load_dotenv(dotenv_path=env_path)
 
 
-def get_repo_pull_info(repo_full_name=None):
+def get_repo_pull_info(repo_full_name=None, pr_id=-1):
     auth = Auth.Token(os.getenv('github_access_token'))
     g = Github(auth=auth)
     if not repo_full_name:
@@ -22,7 +22,10 @@ def get_repo_pull_info(repo_full_name=None):
         repo_owner, repo_name = repo_info[0].split(':')[1], repo_info[1].replace('.git', '')
         repo_full_name = f"{repo_owner}/{repo_name}"
     repo = g.get_repo(repo_full_name)
-    repo_pulls = repo.get_pulls()
+    if pr_id == -1:
+        repo_pulls = repo.get_pulls()
+    else:
+        repo_pulls = [repo.get_pull(pr_id)]
     pull_content = []
     for pull in repo_pulls:
         pull_content.append([[]] * 3)

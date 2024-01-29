@@ -7,7 +7,7 @@ import argparse
 
 def main():
     parser = argparse.ArgumentParser(description="A comment generator for GitHub pull-requests, based on OpenAI.")
-    parser.add_argument("-p", "--post", default=False, help="Post comments to GitHub", action="store_true")
+    parser.add_argument("-u", "--upload", default=False, help="Upload comments to GitHub", action="store_true")
     parser.add_argument("-r", "--repo", type=str, default=None, help="Which repository to check. The default "
                                                                      "repository is your current directory. The "
                                                                      "format is {repo_owner}/{repo_name}")
@@ -15,9 +15,12 @@ def main():
                                                                     ".env should as follows:\n"
                                                                     "\napi_key={github_api_key}\n"
                                                                     "github_access_token={github_access_token}")
+    parser.add_argument('-pr', '--pull-requests-id', type=int, default=-1, help="ID of the pull-request. If no ID is "
+                                                                                "provided, all the repo's pull "
+                                                                                "requests will be checked")
     args = parser.parse_args()
     helper.configure(args.env)
-    pull_content = helper.get_repo_pull_info(args.repo)
+    pull_content = helper.get_repo_pull_info(args.repo, args.pull_requests_id)
 
     client = OpenAI(
         api_key=os.getenv('api_key')
@@ -55,8 +58,8 @@ def main():
             )
             file.append(chat_completion.choices[0].message.content)
             print(chat_completion.choices[0].message.content)
-    if args.post:
-        print("Posting the comments to GitHub...")
+    if args.upload:
+        print("Uploading the comments to GitHub...")
         helper.upload_repo_pull_comments(pull_content, args.repo)
 
 
