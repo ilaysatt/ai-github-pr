@@ -32,6 +32,7 @@ def main():
     sys_messages = {"role": "system", "content": "You are a tool that analyzes changes in GitHub pull requests, "
                                                  "understanding the context and impact on the overall codebase. "}
     for content in pull_content:
+        print(f"\nPull-request {content[0]}: {content[1]}")
         for file in content[2]:
             if not file[1]:
                 message = request + "This is the file: " + file[2] + (". Ignore the pluses and minuses in the "
@@ -52,12 +53,14 @@ def main():
                 else:
                     file.append(None)
                     continue
+            print(f"\nRegarding file: {file[0]}")
             chat_completion = client.chat.completions.create(
                 messages=[sys_messages, {"role": "user", "content": message}],
                 model="gpt-3.5-turbo"
             )
             file.append(chat_completion.choices[0].message.content)
             print(chat_completion.choices[0].message.content)
+        print("---------------")
     if args.upload:
         print("Uploading the comments to GitHub...")
         helper.upload_repo_pull_comments(pull_content, args.repo)
