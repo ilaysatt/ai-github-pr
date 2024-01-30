@@ -1,3 +1,4 @@
+import github.PullRequest
 from github import Github
 from github import Auth
 from github import GithubException
@@ -28,17 +29,28 @@ def get_repo_pull_info(repo_full_name=None, pr_id=-1):
         repo_pulls = [repo.get_pull(pr_id)]
     pull_content = []
     for pull in repo_pulls:
+        pull_filenames = []
+        for file in pull.get_files():
+            pull_filenames.append(file.filename)
+        print("in pull loop")
+        commits = pull.get_commits()
         pull_content.append([[]] * 3)
         pull_content[-1][0] = pull.number
         pull_content[-1][1] = pull.title
-        for file in pull.get_files():
-            try:
-                file_content = repo.get_contents(file.filename).decoded_content.decode()
-            except GithubException:
-                file_content = None
-                pass
-            pull_content[-1][2].append(
-                [file.filename, file_content, file.patch])
+        for commit in commits:
+            print("in commit loop, this is commit" + commit.url)
+            for file in commit.files:
+                if file.filename not in pull_filenames:
+                    continue
+                try:
+                    file_content = repo.get_contents(file.filename).decoded_content.decode()
+                except GithubException:
+                    file_content = None
+                    pass
+                pull_content[-1][2].append(
+                    [file.filename, file_content, file.patch, commit])
+        for content in pull_content:
+            print(len(content[2]))
     return pull_content
 
 
@@ -54,7 +66,13 @@ def upload_repo_pull_comments(pull_content, repo_full_name=None):
         pull_request = repo.get_pull(content[0])
         for file in content[2]:
             if file[-1]:
-                pull_request.create_issue_comment("Regarding file: " + file[0] + "\n" + file[-1])
+                #pull_request.create_issue_comment("Regarding file: " + file[0] + "\n" + file[-1])
+                pull_request.create_review_comment(file[-2], commit=file[3], path=file[0], subject_type='file')
+                pull_request.create_review(
+                    body=file[-1],
+                    commit=file[3],
+                    event="REQUEST_CHANGES",
+                )
 
 
 if __name__ == '__main__':
