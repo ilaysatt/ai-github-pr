@@ -9,8 +9,9 @@ def main():
     parser = argparse.ArgumentParser(description="A comment generator for GitHub pull-requests, based on OpenAI.")
     parser.add_argument("-u", "--upload", default=False, help="Upload comments to GitHub", action="store_true")
     parser.add_argument("-r", "--repo", type=str, default=None, help="Which repository to check. The default "
-                                                                     "repository is your current directory. The "
-                                                                     "format is {repo_owner}/{repo_name}")
+                                                                     "repository is the one that is associated with "
+                                                                     "your current directory. The format is {"
+                                                                     "repo_owner}/{repo_name}")
     parser.add_argument("-e", "--env", type=str, default=None, help="Location of .env file to use. The format of the "
                                                                     ".env should as follows:\n"
                                                                     "\napi_key={github_api_key}\n"
@@ -18,8 +19,11 @@ def main():
     parser.add_argument('-pr', '--pull-requests-id', type=int, default=-1, help="ID of the pull-request. If no ID is "
                                                                                 "provided, all the repo's pull "
                                                                                 "requests will be checked")
+    parser.add_argument('-q', '--quite', default=False, action="store_true", help="Don't print generated comments and "
+                                                                                  "suggestions to cli")
     args = parser.parse_args()
     helper.configure(args.env)
+    print("Fetching pull-request(s) + file(s)...")
     pull_content = helper.get_repo_pull_info(args.repo, args.pull_requests_id)
 
     client = OpenAI(
@@ -70,15 +74,16 @@ def main():
                 model="gpt-3.5-turbo"
             )
             file.append(chat_completion.choices[0].message.content)
-            print(file[-1])
+            if not args.quite:
+                print(file[-1])
             print("Processing code suggestion...")
             chat_completion = client.chat.completions.create(
                 messages=[sys_messages, {"role": "user", "content": message_suggestion}],
                 model="gpt-3.5-turbo"
             )
             file.append(chat_completion.choices[0].message.content)
-            print("Code suggestion:")
-            print(file[-1])
+            if not args.quite:
+                print(file[-1])
             print("--------")
         print("*****************")
     if args.upload:
