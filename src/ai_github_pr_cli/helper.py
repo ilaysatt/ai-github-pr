@@ -1,4 +1,3 @@
-import github.PullRequest
 from github import Github
 from github import Auth
 from github import GithubException
@@ -7,16 +6,11 @@ import os
 
 
 def configure(env_location=None):
-    if not env_location:
-        current_directory = os.getcwd()
-        env_path = os.path.join(current_directory, '.env')
-    else:
-        env_path = env_location
-    load_dotenv(dotenv_path=env_path)
+    load_dotenv(dotenv_path=env_location)
 
 
 def get_repo_pull_info(repo_full_name=None, pr_id=-1):
-    auth = Auth.Token(os.getenv('github_access_token'))
+    auth = Auth.Token(os.getenv('GITHUB_TOKEN'))
     g = Github(auth=auth)
     if not repo_full_name:
         repo_info = os.popen('git remote get-url origin').read().strip().split('/')[-2:]
@@ -52,7 +46,7 @@ def get_repo_pull_info(repo_full_name=None, pr_id=-1):
 
 
 def upload_repo_pull_comments(pull_content, repo_full_name=None):
-    auth = Auth.Token(os.getenv('github_access_token'))
+    auth = Auth.Token(os.getenv('GITHUB_TOKEN'))
     g = Github(auth=auth)
     if not repo_full_name:
         repo_info = os.popen('git remote get-url origin').read().strip().split('/')[-2:]
