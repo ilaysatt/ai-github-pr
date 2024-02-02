@@ -41,38 +41,45 @@ def main():
     sys_messages = {"role": "system", "content": "You are a tool that analyzes changes in GitHub pull requests, "
                                                  "understanding the context and impact on the overall codebase. "}
     for content in pull_content:
-        print(f"\nPull-request {content[0]}: {content[1]}")
-        for file in content[2]:
-            print(f"\nRegarding file: {file[0]}...")
-            if not file[1]:
-                message_comment = request_comment + "This is the file: " + file[2] + (". Ignore the pluses and "
-                                                                                      "minuses in the"
-                                                                                      "beginning of the"
-                                                                                      "lines.")
-                message_suggestion = request_suggestion + "This is the file: " + file[2] + (". Ignore the pluses and "
-                                                                                            "minuses in the"
-                                                                                            "beginning of the"
-                                                                                            "lines.")
+        print(f"\nPull-request {content['pull number']}: {content['pull title']}")
+
+        for file in content['files']:
+            print(f"\nRegarding file: {file['filename']}...")
+            if not file['file content']:
+                message_comment = request_comment + "This is the file: " + file['file patch'] + (". Ignore the pluses "
+                                                                                                 "and minuses in the "
+                                                                                                 "beginning of the "
+                                                                                                 "lines.")
+                message_suggestion = request_suggestion + "This is the file: " + file['file patch'] + (
+                    ". Ignore the pluses and "
+                    "minuses in the"
+                    "beginning of the"
+                    "lines.")
             else:
-                message_comment = request_comment + "This is the patch, i.e. the changes made to the file: " + file[2] + (
-                    "\n This is the file "
-                    "content before the "
-                    "changes: ") + file[1]
-                message_suggestion = request_suggestion + "This is the patch, i.e. the changes made to the file: " + file[2] + (
-                    "\n This is the file "
-                    "content before the "
-                    "changes: ") + file[1]
+                message_comment = (request_comment + "This is the patch, i.e. the changes made to the file: " +
+                                   file['file patch'] + (
+                                       "\n This is the file "
+                                       "content before the "
+                                       "changes: ") + file['file content'])
+                message_suggestion = request_suggestion + "This is the patch, i.e. the changes made to the file: " + \
+                                     file['file patch'] + (
+                                         "\n This is the file "
+                                         "content before the "
+                                         "changes: ") + file['file content']
             encoding = tiktoken.encoding_for_model("gpt-3.5-turbo")
             if len(encoding.encode(message_comment)) > 4097 or len(encoding.encode(message_suggestion)) > 4097:
-                if file[1]:
-                    message_comment = request_comment + "This is the patch, i.e. the changes made to the file: " + file[2]
-                    message_suggestion = request_suggestion + "This is the patch, i.e. the changes made to the file: " + file[2]
+                if file['file content']:
+                    message_comment = (request_comment + "This is the patch, i.e. the changes made to the file: " +
+                                       file['file patch'])
+                    message_suggestion = (
+                            request_suggestion + "This is the patch, i.e. the changes made to the file: " +
+                            file['file patch'])
                     if len(encoding.encode(message_comment)) > 4097 or len(encoding.encode(message_suggestion)) > 4097:
-                        file.append(None)
+                        file['comment'] = None
                         print("File token too large for OpenAI API. Continuing...")
                         continue
                 else:
-                    file.append(None)
+                    file['comment'] = None
                     print("File token too large for OpenAI API. Continuing...")
                     continue
             print("Processing comment...")
@@ -80,20 +87,19 @@ def main():
                 messages=[sys_messages, {"role": "user", "content": message_comment}],
                 model="gpt-3.5-turbo"
             )
-            file.append(chat_completion.choices[0].message.content)
+            file['comment'] = chat_completion.choices[0].message.content
             if not args.quite:
-                print(file[-1])
+                print(file['comment'])
             print("\nProcessing code suggestion...")
             chat_completion = client.chat.completions.create(
                 messages=[sys_messages, {"role": "user", "content": message_suggestion}],
                 model="gpt-3.5-turbo"
             )
-            file.append(chat_completion.choices[0].message.content)
+            file['code suggestion'] = chat_completion.choices[0].message.content
             if not args.quite:
-                print(file[-1])
+                print(file['code suggestion'])
             print("--------")
         print("*****************")
     if args.upload:
         print("Uploading the comments to GitHub...")
         helper.upload_repo_pull_comments(pull_content, args.repo)
-

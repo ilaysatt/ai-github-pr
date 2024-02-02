@@ -19,7 +19,7 @@ def get_repo_pull_info(repo_full_name=None, pr_id=-1):
     Returns pull-request information,
     :param repo_full_name: Full name of the repository, in the format of <repo_name>/<repo_full_name>
     :param pr_id: Pull request id
-    :return: A list of pull-request information, including name, number and files
+    :return: A list of pull-request information, including name, ID and files
     """
     auth = Auth.Token(os.getenv('GITHUB_TOKEN'))
     g = Github(auth=auth)
@@ -40,9 +40,7 @@ def get_repo_pull_info(repo_full_name=None, pr_id=-1):
         for file in pull.get_files():
             pull_filenames.append(file.filename)
         commits = pull.get_commits()
-        pull_content.append([[]] * 3)
-        pull_content[-1][0] = pull.number
-        pull_content[-1][1] = pull.title
+        pull_content.append({'pull number': pull.number, 'pull title': pull.title, 'files': []})
         for commit in commits:
             for file in commit.files:
                 if file.filename not in pull_filenames:
@@ -52,8 +50,8 @@ def get_repo_pull_info(repo_full_name=None, pr_id=-1):
                 except GithubException:
                     file_content = None
                     pass
-                pull_content[-1][2].append(
-                    [file.filename, file_content, file.patch, commit])
+                pull_content[-1]['files'].append({'filename': file.filename, 'file content': file_content,
+                                                  'file patch': file.patch, 'commit': commit})
 
     return pull_content
 
@@ -74,13 +72,13 @@ def upload_repo_pull_comments(pull_content, repo_full_name=None):
         repo_full_name = f"{repo_owner}/{repo_name}"
     repo = g.get_repo(repo_full_name)
     for content in pull_content:
-        pull_request = repo.get_pull(content[0])
-        for file in content[2]:
-            if file[-1]:
-                pull_request.create_review_comment(file[-2], commit=file[3], path=file[0], subject_type='file')
+        pull_request = repo.get_pull(content['pull number'])
+        for file in content['files']:
+            if file['comment']:
+                pull_request.create_review_comment(file['comment'], commit=file['commit'], path=file['filename'],
+                                                   subject_type='file')
                 pull_request.create_review(
-                    body=file[-1],
-                    commit=file[3],
+                    body=file['code suggestion'],
+                    commit=file['commit'],
                     event="REQUEST_CHANGES",
                 )
-
