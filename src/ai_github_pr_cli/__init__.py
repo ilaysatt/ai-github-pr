@@ -39,6 +39,7 @@ def main():
     for content in pull_content:
         print(f"\nPull-request {content[0]}: {content[1]}")
         for file in content[2]:
+            print(f"\nRegarding file: {file[0]}...")
             if not file[1]:
                 message_comment = request_comment + "This is the file: " + file[2] + (". Ignore the pluses and "
                                                                                       "minuses in the"
@@ -64,11 +65,12 @@ def main():
                     message_suggestion = request_suggestion + "This is the patch, i.e. the changes made to the file: " + file[2]
                     if len(encoding.encode(message_comment)) > 4097 or len(encoding.encode(message_suggestion)) > 4097:
                         file.append(None)
+                        print("File token too large for OpenAI API. Continuing...")
                         continue
                 else:
                     file.append(None)
+                    print("File token too large for OpenAI API. Continuing...")
                     continue
-            print(f"\nRegarding file: {file[0]}")
             print("Processing comment...")
             chat_completion = client.chat.completions.create(
                 messages=[sys_messages, {"role": "user", "content": message_comment}],
@@ -77,7 +79,7 @@ def main():
             file.append(chat_completion.choices[0].message.content)
             if not args.quite:
                 print(file[-1])
-            print("Processing code suggestion...")
+            print("\nProcessing code suggestion...")
             chat_completion = client.chat.completions.create(
                 messages=[sys_messages, {"role": "user", "content": message_suggestion}],
                 model="gpt-3.5-turbo"
