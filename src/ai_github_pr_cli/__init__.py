@@ -6,6 +6,10 @@ import argparse
 
 
 def main():
+    """
+    Fetches code from pull-requests and generates comments / code changes using OpenAI API
+    :returns: None
+    """
     parser = argparse.ArgumentParser(description="A comment generator for GitHub pull-requests, based on OpenAI.")
     parser.add_argument("-u", "--upload", default=False, help="Upload comments to GitHub", action="store_true")
     parser.add_argument("-r", "--repo", type=str, default=None, help="Which repository to check. The default "
@@ -93,6 +97,3 @@ def main():
         print("Uploading the comments to GitHub...")
         helper.upload_repo_pull_comments(pull_content, args.repo)
 
-
-if __name__ == "__main__":
-    main()

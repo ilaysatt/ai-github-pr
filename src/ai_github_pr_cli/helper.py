@@ -6,17 +6,30 @@ import os
 
 
 def configure(env_location=None):
+    """
+    Loads environment variables
+    :param env_location: env file as string
+    :return: None
+    """
     load_dotenv(dotenv_path=env_location)
 
 
 def get_repo_pull_info(repo_full_name=None, pr_id=-1):
+    """
+    Returns pull-request information,
+    :param repo_full_name: Full name of the repository, in the format of <repo_name>/<repo_full_name>
+    :param pr_id: Pull request id
+    :return: A list of pull-request information, including name, number and files
+    """
     auth = Auth.Token(os.getenv('GITHUB_TOKEN'))
     g = Github(auth=auth)
+    # If repo name isn't provided, look for repo controlling current directory
     if not repo_full_name:
         repo_info = os.popen('git remote get-url origin').read().strip().split('/')[-2:]
         repo_owner, repo_name = repo_info[0].split(':')[1], repo_info[1].replace('.git', '')
         repo_full_name = f"{repo_owner}/{repo_name}"
     repo = g.get_repo(repo_full_name)
+    # If pull-request ID isn't provided, extract all the repository's pull-requests
     if pr_id == -1:
         repo_pulls = repo.get_pulls()
     else:
@@ -46,8 +59,15 @@ def get_repo_pull_info(repo_full_name=None, pr_id=-1):
 
 
 def upload_repo_pull_comments(pull_content, repo_full_name=None):
+    """
+    Uploads generated comments and code changes to GitHub repository pull-requests
+    :param pull_content: A list of pull-request information, including name, number and files
+    :param repo_full_name: Full name of the repository, in the format of <repo_name>/<repo_full_name>
+    :return:
+    """
     auth = Auth.Token(os.getenv('GITHUB_TOKEN'))
     g = Github(auth=auth)
+    # If repo name isn't provided, look for repo controlling current directory
     if not repo_full_name:
         repo_info = os.popen('git remote get-url origin').read().strip().split('/')[-2:]
         repo_owner, repo_name = repo_info[0].split(':')[1], repo_info[1].replace('.git', '')
@@ -64,6 +84,3 @@ def upload_repo_pull_comments(pull_content, repo_full_name=None):
                     event="REQUEST_CHANGES",
                 )
 
-
-if __name__ == '__main__':
-    get_repo_pull_info()
